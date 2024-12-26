@@ -1,0 +1,27 @@
+import re
+def chatbot():
+    print("Chatbot: Hi there! I'm your simple chatbot. How can I help you today?")
+    
+    while True:
+        user_input = input("You: ").strip().lower()
+
+        if user_input in ["exit", "quit", "bye"]:
+            print("Chatbot: Goodbye! Have a great day!")
+            break
+
+        elif re.search(r"\b(hi|hello|hey)\b", user_input):
+            print("Chatbot: Hello! How can I assist you?")
+
+        elif "help" in user_input:
+            print("Chatbot: Sure! Let me know what you need help with.")
+
+        elif re.search(r"\b(weather|forecast|temperature)\b", user_input):
+            print("Chatbot: I don't have real-time weather updates, but you can try checking a weather app or website for accurate information.")
+
+        elif re.search(r"\b(movie|recommend|suggest|recommendation)\b", user_input):
+            print("Chatbot: Here's a recommendation for you! If you like action, try 'Mad Max: Fury Road.' For drama, 'The Pursuit of Happyness' is a great choice.")
+
+        else:
+            print("Chatbot: I'm not sure how to respond to that. Can you rephrase your query or ask something else?")
+
+chatbot()
