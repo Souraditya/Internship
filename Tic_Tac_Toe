@@ -1,0 +1,121 @@
+import math
+PLAYER = None  
+AI = None      
+def print_board(board):
+    """Prints the Tic-Tac-Toe board."""
+    for row in board:
+        print("|".join(row))
+    print("\n")
+
+def is_winner(board, player):
+    """Checks if the given player has won the game."""
+    for row in board:
+        if all(cell == player for cell in row):
+            return True
+    for col in range(3):
+        if all(row[col] == player for row in board):
+            return True
+    if all(board[i][i] == player for i in range(3)) or all(board[i][2 - i] == player for i in range(3)):
+        return True
+    return False
+
+def is_full(board):
+    """Checks if the board is full."""
+    return all(all(cell != " " for cell in row) for row in board)
+
+def get_valid_moves(board):
+    """Returns a list of valid moves."""
+    return [(r, c) for r in range(3) for c in range(3) if board[r][c] == " "]
+
+def minimax(board, depth, is_maximizing, alpha, beta):
+    """Minimax algorithm with Alpha-Beta pruning."""
+    if is_winner(board, AI):
+        return 10 - depth
+    if is_winner(board, PLAYER):
+        return depth - 10
+    if is_full(board):
+        return 0
+
+    if is_maximizing:
+        max_eval = -math.inf
+        for (r, c) in get_valid_moves(board):
+            board[r][c] = AI
+            evaluation = minimax(board, depth + 1, False, alpha, beta)
+            board[r][c] = " "
+            max_eval = max(max_eval, evaluation)
+            alpha = max(alpha, evaluation)
+            if beta <= alpha:
+                break
+        return max_eval
+    else:
+        min_eval = math.inf
+        for (r, c) in get_valid_moves(board):
+            board[r][c] = PLAYER
+            evaluation = minimax(board, depth + 1, True, alpha, beta)
+            board[r][c] = " "
+            min_eval = min(min_eval, evaluation)
+            beta = min(beta, evaluation)
+            if beta <= alpha:
+                break
+        return min_eval
+
+def best_move(board):
+    """Determines the AI's best move."""
+    best_val = -math.inf
+    move = None
+    for (r, c) in get_valid_moves(board):
+        board[r][c] = AI
+        move_val = minimax(board, 0, False, -math.inf, math.inf)
+        board[r][c] = " "
+        if move_val > best_val:
+            best_val = move_val
+            move = (r, c)
+    return move
+
+def play_game():
+    """Main function to play the game."""
+    global PLAYER, AI
+    while True:
+        PLAYER = input("Do you want to play as 'X' or 'O'? ").upper()
+        if PLAYER in ["X", "O"]:
+            AI = "O" if PLAYER == "X" else "X"
+            break
+        print("Invalid choice! Please choose 'X' or 'O'.")
+
+    print(f"You are '{PLAYER}' and the AI is '{AI}'.")
+    board = [[" " for _ in range(3)] for _ in range(3)]
+    print("Welcome to Tic-Tac-Toe!")
+    print_board(board)
+    turn = "X"
+    while True:
+        if turn == PLAYER:
+            while True:
+                try:
+                    row, col = map(int, input("Enter your move (row and column, 0-2): ").split())
+                    if board[row][col] == " ":
+                        break
+                    else:
+                        print("Invalid move! Cell is already taken. Try again.")
+                except (ValueError, IndexError):
+                    print("Invalid input! Enter row and column as two numbers between 0 and 2.")
+            board[row][col] = PLAYER
+        else:
+            print("AI is making its move...")
+            move = best_move(board)
+            if move:
+                board[move[0]][move[1]] = AI
+
+        print_board(board)
+        if is_winner(board, turn):
+            if turn == PLAYER:
+                print("Congratulations, you win!")
+            else:
+                print("AI wins! Better luck next time.")
+            break
+        if is_full(board):
+            print("It's a draw!")
+            break
+        turn = AI if turn == PLAYER else PLAYER
+
+if __name__ == "__main__":
+    play_game()
