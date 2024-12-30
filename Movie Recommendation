@@ -1,0 +1,83 @@
+import pandas as pd
+
+movies_df = pd.read_csv('updated_dataset_with_enhanced_moods.csv')
+
+print("Dataset preview:")
+print(movies_df.head())
+
+mood_to_genre = {
+    "happy": ["Feel-good", "Comedy", "Animation", "Family"],
+    "sad": ["Drama", "Emotional", "Family"],
+    "adventurous": ["Action", "Thriller", "Science Fiction"],
+    "romantic": ["Romance"],
+    "thoughtful": ["Mind-bending", "Thriller", "Documentary"],
+    "hopeful": ["Drama", "Hopeful"],
+    "dark": ["Dark", "Thriller", "Crime", "Horror"],
+}
+
+movies_df['genres'] = movies_df['genres'].str.strip()
+movies_df['original_language'] = movies_df['original_language'].str.strip().str.lower()
+movies_df['release_year'] = movies_df['release_date'].astype(str).str[-4:].apply(lambda x: int(x) if x.isdigit() else None)
+
+movies_df = movies_df.dropna(subset=['release_year'])
+
+def recommend_movies(mood, genre, release_year_range, language, movie_name, dataset, mood_to_genre):
+    filtered_dataset = dataset.copy()
+
+    if mood in mood_to_genre:
+        matching_genres = mood_to_genre[mood]
+        filtered_dataset = filtered_dataset[
+            filtered_dataset['genres'].apply(lambda genres: any(genre.strip() in matching_genres for genre in str(genres).split(',')))
+        ]
+
+    if genre:
+        filtered_dataset = filtered_dataset[
+            filtered_dataset['genres'].apply(lambda genres: any(genre.strip().lower() in genre_entry.lower() for genre_entry in str(genres).split(',')))
+        ]
+
+    if release_year_range:
+        try:
+            start_year, end_year = map(int, release_year_range.split('-'))
+            filtered_dataset = filtered_dataset[
+                (filtered_dataset['release_year'] >= start_year) & (filtered_dataset['release_year'] <= end_year)
+            ]
+        except ValueError:
+            print("Invalid year range. Please use the format YYYY-YYYY.")
+            return "Invalid release year range."
+
+    if language:
+        filtered_dataset = filtered_dataset[
+            filtered_dataset['original_language'].str.contains(language, case=False, na=False)
+        ]
+
+    if movie_name:
+        filtered_dataset = filtered_dataset[
+            filtered_dataset['title'].str.contains(movie_name, case=False, na=False)
+        ]
+        if filtered_dataset.empty:
+            return f"No movies found with the name '{movie_name}'."
+
+    return filtered_dataset[['title', 'genres', 'release_year', 'director']] if not filtered_dataset.empty else "No movies match your criteria."
+
+print("Please provide your preferences:")
+user_mood = input("What is your current mood?: ").strip().lower()
+user_genre = input("Genre (optional): ").strip()
+user_release_year_range = input("Release Year Range (e.g., 2000-2010, optional): ").strip()
+user_language = input("Language (e.g., English, Hindi, etc.): ").strip().lower()
+user_movie_name = input("Movie Name (optional): ").strip()
+
+recommendations = recommend_movies(
+    user_mood,
+    user_genre,
+    user_release_year_range,
+    user_language,
+    user_movie_name,
+    movies_df,
+    mood_to_genre
+)
+
+if isinstance(recommendations, pd.DataFrame):
+    print("\nRecommended Movies:\n")
+    print(recommendations.to_string(index=False))
+else:
+    print(recommendations)
